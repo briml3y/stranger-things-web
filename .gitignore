@@ -1,3 +1,6 @@
 #Ignore swap files
 *.swp
 
+/*.ipr
+/*.iml
+/*.iws
