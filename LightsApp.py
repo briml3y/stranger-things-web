@@ -7,7 +7,7 @@ import threading
 import logging
 import time
 from amqpy import Connection, Message, AbstractConsumer, Timeout
-#from neopixel import *
+from neopixel import *
 
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-10s) %(message)s',
@@ -26,9 +26,10 @@ LED_INVERT     = False   # True to invert the signal (when using NPN transistor 
 red=Color(255, 0, 0)
 blue=Color(0, 255, 0)
 green=Color(0, 0, 255)
-
+shift=int(-1)
 timeBeteenLetters=2
-
+waiting=1
+waitingThread=None;
 class Consumer(AbstractConsumer):
     def run(self, msg):
         logging.debug('Received a message: {}'.format(msg.body))
@@ -50,87 +51,103 @@ def textQueueWatcher():
         message=queue.get()
         if message:
             displayMessage(message)
-        if queue.qsize() > 0:
-            time.sleep(pause)
+            if queue.qsize() > 0:
+                waiting=0;
+                time.sleep(pause)
+        else:
+            waitingThread=threading.Thread(target=waitingDisplay)
+            waitingThread.setDaemon(True)
+            waitingThread.start()
         if exitFlag:
             break
 
 def displayMessage(message):
+    if waitingThread:
+        waiting=1
+        while waitingThread.isAlive():
+            time.sleep(1)
     currentCharacter=None
     previousCharacter=None
-    if message:
-        logging.info('Printing new message: %s', message)
-        for c in message:
-            logging.debug('Checking character: %s', c)
-            if c.lower() in alphabetDict:
-                numbers=alphabetDict.get(c.lower())
-                logging.debug('Found matching numbers %s', numbers)
-                for number in numbers.split(','):
-                    strip.setPixel(number,red)
-                strip.show()
-                time.sleep(timeBeteenLetters)
+    logging.info('Printing new message: %s', message)
+    for c in message:
+        logging.debug('Checking character: %s', c)
+        if c.lower() in alphabetDict:
+            numbers=alphabetDict.get(c.lower())
+            logging.debug('Found matching numbers %s', numbers)
+            colorClear()
+            for number in numbers.split(','):
+                strip.setPixelColor(int(number)+shift,Color(255, 0, 0))
+        strip.show()
+        time.sleep(timeBeteenLetters)
 
 
-# def visualTest():
+def waitingDisplaY():
+    while True:
+            rainbow(strip);
+            if waiting:
+                break
 
+# Define functions which animate LEDs in various ways.
+def colorWipe(strip, color, wait_ms=50):
+    # """Wipe color across display a pixel at a time."""
+    for i in range(strip.numPixels()):
+        strip.setPixelColor(i, color)
+        strip.show()
+        time.sleep(wait_ms/1000.0)
 
+def colorClear():
+    for i in range(strip.numPixels()):
+        strip.setPixelColor(i, Color(0,0,0))
+        strip.show()
 
-# # Define functions which animate LEDs in various ways.
-# def colorWipe(strip, color, wait_ms=50):
-#     """Wipe color across display a pixel at a time."""
-#     for i in range(strip.numPixels()):
-#         strip.setPixelColor(i, color)
-#         strip.show()
-#         time.sleep(wait_ms/1000.0)
-#
-# def theaterChase(strip, color, wait_ms=50, iterations=10):
-#     """Movie theater light style chaser animation."""
-#     for j in range(iterations):
-#         for q in range(3):
-#             for i in range(0, strip.numPixels(), 3):
-#                 strip.setPixelColor(i+q, color)
-#             strip.show()
-#             time.sleep(wait_ms/1000.0)
-#             for i in range(0, strip.numPixels(), 3):
-#                 strip.setPixelColor(i+q, 0)
-#
-# def wheel(pos):
-#     """Generate rainbow colors across 0-255 positions."""
-#     if pos < 85:
-#         return Color(pos * 3, 255 - pos * 3, 0)
-#     elif pos < 170:
-#         pos -= 85
-#         return Color(255 - pos * 3, 0, pos * 3)
-#     else:
-#         pos -= 170
-#         return Color(0, pos * 3, 255 - pos * 3)
-#
-# def rainbow(strip, wait_ms=20, iterations=1):
-#     """Draw rainbow that fades across all pixels at once."""
-#     for j in range(256*iterations):
-#         for i in range(strip.numPixels()):
-#             strip.setPixelColor(i, wheel((i+j) & 255))
-#         strip.show()
-#         time.sleep(wait_ms/1000.0)
-#
-# def rainbowCycle(strip, wait_ms=20, iterations=5):
-#     """Draw rainbow that uniformly distributes itself across all pixels."""
-#     for j in range(256*iterations):
-#         for i in range(strip.numPixels()):
-#             strip.setPixelColor(i, wheel(((i * 256 / strip.numPixels()) + j) & 255))
-#         strip.show()
-#         time.sleep(wait_ms/1000.0)
-#
-# def theaterChaseRainbow(strip, wait_ms=50):
-#     """Rainbow movie theater light style chaser animation."""
-#     for j in range(256):
-#         for q in range(3):
-#             for i in range(0, strip.numPixels(), 3):
-#                 strip.setPixelColor(i+q, wheel((i+j) % 255))
-#             strip.show()
-#             time.sleep(wait_ms/1000.0)
-#             for i in range(0, strip.numPixels(), 3):
-#                 strip.setPixelColor(i+q, 0)
+def theaterChase(strip, color, wait_ms=50, iterations=10):
+    """Movie theater light style chaser animation."""
+    for j in range(iterations):
+        for q in range(3):
+            for i in range(0, strip.numPixels(), 3):
+                strip.setPixelColor(i+q, color)
+            strip.show()
+            time.sleep(wait_ms/1000.0)
+            for i in range(0, strip.numPixels(), 3):
+                strip.setPixelColor(i+q, 0)
+
+def wheel(pos):
+    """Generate rainbow colors across 0-255 positions."""
+    if pos < 85:
+        return Color(pos * 3, 255 - pos * 3, 0)
+    elif pos < 170:
+        pos -= 85
+        return Color(255 - pos * 3, 0, pos * 3)
+    else:
+        pos -= 170
+        return Color(0, pos * 3, 255 - pos * 3)
+
+def rainbow(strip, wait_ms=20, iterations=1):
+    """Draw rainbow that fades across all pixels at once."""
+    for j in range(256*iterations):
+        for i in range(strip.numPixels()):
+            strip.setPixelColor(i, wheel((i+j) & 255))
+        strip.show()
+        time.sleep(wait_ms/1000.0)
+
+def rainbowCycle(strip, wait_ms=20, iterations=5):
+    """Draw rainbow that uniformly distributes itself across all pixels."""
+    for j in range(256*iterations):
+        for i in range(strip.numPixels()):
+            strip.setPixelColor(i, wheel(((i * 256 / strip.numPixels()) + j) & 255))
+        strip.show()
+        time.sleep(wait_ms/1000.0)
+
+def theaterChaseRainbow(strip, wait_ms=50):
+    """Rainbow movie theater light style chaser animation."""
+    for j in range(256):
+        for q in range(3):
+            for i in range(0, strip.numPixels(), 3):
+                strip.setPixelColor(i+q, wheel((i+j) % 255))
+            strip.show()
+            time.sleep(wait_ms/1000.0)
+            for i in range(0, strip.numPixels(), 3):
+                strip.setPixelColor(i+q, 0)
 
 
 
@@ -175,9 +192,13 @@ if __name__ == '__main__':
     textQueueThread.setDaemon(True)
     textQueueThread.start()
 
-    queue.put('test')
-    time.sleep(20)
-    logging.debug('Setting exit flag to 1')
-    exitFlag=1
-    time.sleep(5)
+
+    while True:
+       logging.debug('TEST')
+       time.sleep(1)
+    # queue.put('test')
+    # time.sleep(40)
+    # logging.debug('Setting exit flag to 1')
+    # exitFlag=1
+    # time.sleep(5)
 

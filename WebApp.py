@@ -9,7 +9,7 @@ from flask import Flask, render_template, request
 app = Flask(__name__)
 
 
-alphabetDict=dict(config.items('alphabet'))
+# alphabetDict=dict(config.items('alphabet'))
 # for k, v in alphabetDict.items():
 #     print(k, v)
 
@@ -43,7 +43,6 @@ if __name__ == '__main__':
     #TODO Add logging here
     host=config.get('web', 'host', 0)
     port=config.getint('web', 'port')
-
     app.run(
       host=host,
       port=port
