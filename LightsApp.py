@@ -12,8 +12,8 @@ from neopixel import *
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-10s) %(message)s',
                     )
-pause=1
-drainWait=2
+timeBetweenMessages=1
+drainWait=.55555
 exitFlag=0
 
 LED_COUNT      = 50      # Number of LED pixels.
@@ -58,8 +58,8 @@ def textQueueWatcher():
             displayMessage(message)
             if queue.qsize() > 0:
                 waiting=0;
-                logging.debug('Pausing for %d seconds', pause)
-                time.sleep(pause)
+                logging.debug('Pausing for %d seconds', timeBetweenMessages)
+                time.sleep(timeBetweenMessages)
         else:
             if  waitingThread and not waitingThread.isAlive():
                 waitingThread=threading.Thread(target=waitingDisplay)
@@ -78,6 +78,7 @@ def displayMessage(message):
     currentCharacter=None
     previousCharacter=None
     logging.info('Printing new message: %s', message)
+    colorWipe(strip,red,10)
     for c in message:
         logging.debug('Checking character: %s', c)
         if c.lower() in alphabetDict:
