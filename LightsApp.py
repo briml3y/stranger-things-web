@@ -12,7 +12,7 @@ from neopixel import *
 logging.basicConfig(level=logging.DEBUG,
                     format='(%(threadName)-10s) %(message)s',
                     )
-pause=2
+pause=1
 drainWait=2
 exitFlag=0
 
@@ -27,9 +27,9 @@ red=Color(255, 0, 0)
 blue=Color(0, 255, 0)
 green=Color(0, 0, 255)
 shift=int(-1)
-timeBeteenLetters=2
+timeBeteenLetters=1
 waiting=1
-waitingThread=None;
+
 class Consumer(AbstractConsumer):
     def run(self, msg):
         logging.debug('Received a message: {}'.format(msg.body))
@@ -45,27 +45,36 @@ def messageQueueWatcher():
         conn.loop(timeout=drainWait)
 
 def textQueueWatcher():
+    global waiting
+    global waitingThread
     while True:
-        logging.debug('Pausing for %d seconds', pause)
-        logging.debug('ExitFlag is %d', exitFlag)
-        message=queue.get()
+        # logging.trace('ExitFlag is %d', exitFlag)
+        message=None
+        try:   
+            message=queue.get_nowait()
+        except:
+            pass 
         if message:
             displayMessage(message)
             if queue.qsize() > 0:
                 waiting=0;
+                logging.debug('Pausing for %d seconds', pause)
                 time.sleep(pause)
         else:
-            waitingThread=threading.Thread(target=waitingDisplay)
-            waitingThread.setDaemon(True)
-            waitingThread.start()
+            if  waitingThread and not waitingThread.isAlive():
+                waitingThread=threading.Thread(target=waitingDisplay)
+                waitingThread.setDaemon(True)
+                waitingThread.start()
         if exitFlag:
             break
 
 def displayMessage(message):
-    if waitingThread:
+    global waiting
+    global waitingThread
+    if waitingThread and waitingThread.isAlive():
         waiting=1
-        while waitingThread.isAlive():
-            time.sleep(1)
+        waitingThread.join()
+
     currentCharacter=None
     previousCharacter=None
     logging.info('Printing new message: %s', message)
@@ -79,9 +88,10 @@ def displayMessage(message):
                 strip.setPixelColor(int(number)+shift,Color(255, 0, 0))
         strip.show()
         time.sleep(timeBeteenLetters)
+    colorClear()
+    strip.show()
 
-
-def waitingDisplaY():
+def waitingDisplay():
     while True:
             rainbow(strip);
             if waiting:
@@ -184,6 +194,8 @@ if __name__ == '__main__':
 
     queue = Queue.Queue()
 
+    waitingThread=threading.Thread(target=waitingDisplay)
+
     msgQueueThread = threading.Thread(target=messageQueueWatcher)
     msgQueueThread.setDaemon(True)
     msgQueueThread.start()
@@ -194,8 +206,8 @@ if __name__ == '__main__':
 
 
     while True:
-       logging.debug('TEST')
-       time.sleep(1)
+       logging.debug('Waiting')
+       time.sleep(60)
     # queue.put('test')
     # time.sleep(40)
     # logging.debug('Setting exit flag to 1')
