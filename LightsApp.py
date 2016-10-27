@@ -1,6 +1,8 @@
 # We need to import request to access the details of the POST request
 # and render_template, to render our templates (form and response)
 # we'll use url_for to get some URLs for the app on the templates
+import signal
+import sys
 import ConfigParser
 import Queue
 import threading
@@ -43,6 +45,8 @@ def messageQueueWatcher():
     while True:
         # wait for events, which will receive delivered messages and call any consumer callbacks
         conn.loop(timeout=drainWait)
+        if exitFlag:
+            break
 
 def textQueueWatcher():
     global waiting
@@ -94,9 +98,9 @@ def displayMessage(message):
 
 def waitingDisplay():
     while True:
-            rainbow(strip);
-            if waiting:
-                break
+        rainbow(strip);
+        if waiting or exitFlag:
+            break
 
 # Define functions which animate LEDs in various ways.
 def colorWipe(strip, color, wait_ms=50):
@@ -161,7 +165,16 @@ def theaterChaseRainbow(strip, wait_ms=50):
                 strip.setPixelColor(i+q, 0)
 
 
-
+def signal_handler(signal, frame):
+    global exitFlag
+    global waiting
+    print('You pressed Ctrl+C!')
+    exitFlag=1
+    waiting=1
+    waitingThread.join()
+    msgQueueThread.join()
+    msgQueueThread.join()
+    sys.exit(0)
 
 if __name__ == '__main__':
 
@@ -205,13 +218,12 @@ if __name__ == '__main__':
     textQueueThread.setDaemon(True)
     textQueueThread.start()
 
-
-    while True:
-       logging.debug('Waiting')
-       time.sleep(60)
     # queue.put('test')
     # time.sleep(40)
     # logging.debug('Setting exit flag to 1')
     # exitFlag=1
     # time.sleep(5)
 
+    signal.signal(signal.SIGINT, signal_handler)
+    print('Press Ctrl+C')
+    signal.pause()
