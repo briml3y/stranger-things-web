@@ -80,7 +80,7 @@ def displayMessage(message):
     if waitingThread and waitingThread.isAlive():
         waiting=1
         waitingThread.join()
-    if message=='shots':
+    if message.lower().strip() == 'shots':
         displayShots()
     else:
         logging.info('Printing new message: %s', message)
