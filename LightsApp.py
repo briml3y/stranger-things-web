@@ -132,7 +132,7 @@ def displayShots():
     time.sleep(shotWaitTimeCount)
     colorClear()
     strip.show()
-:
+
 
 
 def waitingDisplay():
