@@ -18,7 +18,7 @@ timeBetweenMessages=1
 drainWait=.55555
 exitFlag=0
 
-LED_COUNT      = 50      # Number of LED pixels.
+LED_COUNT      = 100      # Number of LED pixels.
 LED_PIN        = 18      # GPIO pin connected to the pixels (must support PWM!).
 LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
 LED_DMA        = 5       # DMA channel to use for generating signal (try 5)
@@ -83,16 +83,28 @@ def displayMessage(message):
     previousCharacter=None
     logging.info('Printing new message: %s', message)
     colorWipe(strip,red,10)
-    for c in message:
-        logging.debug('Checking character: %s', c)
-        if c.lower() in alphabetDict:
-            numbers=alphabetDict.get(c.lower())
+    words=message.split(' ')
+    for word in words:
+        if word.lower() in alphabetDict:
+            numbers=alphabetDict.get(word.lower())
             logging.debug('Found matching numbers %s', numbers)
             colorClear()
             for number in numbers.split(','):
                 strip.setPixelColor(int(number)+shift,Color(255, 0, 0))
-        strip.show()
-        time.sleep(timeBeteenLetters)
+            strip.show()
+            time.sleep(timeBeteenLetters)
+
+        else:
+            for c in word:
+                logging.debug('Checking character: %s', c)
+                if c.lower() in alphabetDict:
+                    numbers=alphabetDict.get(c.lower())
+                    logging.debug('Found matching numbers %s', numbers)
+                    colorClear()
+                    for number in numbers.split(','):
+                        strip.setPixelColor(int(number)+shift,Color(255, 0, 0))
+                strip.show()
+                time.sleep(timeBeteenLetters)
     colorClear()
     strip.show()
 

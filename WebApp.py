@@ -2,8 +2,13 @@
 # and render_template, to render our templates (form and response)
 # we'll use url_for to get some URLs for the app on the templates
 import ConfigParser
+import logging
 from amqpy import Connection, Message
 from flask import Flask, render_template, request
+
+logging.basicConfig(level=logging.INFO,
+                            format='(%(threadName)-10s) %(message)s',
+                                                )
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -20,7 +25,7 @@ def form():
         return render_template('index.html')
     elif request.method == 'POST':
         text = request.form['text']
-        print text;
+        logging.info(text);
         ch.basic_publish(Message(text), exchange='strangerthings', routing_key='text.queue')
     return render_template('index.html', text=text)
 
