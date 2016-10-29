@@ -32,7 +32,7 @@ shift=int(-1)
 timeBeteenLetters=1
 waiting=1
 shotFlashCount=5
-shotWaitTimeCount=.50
+shotWaitTimeCount=.10
 
 class Consumer(AbstractConsumer):
     def run(self, msg):
@@ -114,28 +114,31 @@ def displayShots():
     numbers=alphabetDict.get('shots')
     logging.debug('Found matching numbers %s', numbers)
 
+    count=0
     colorClear()
     strip.show()
-    for number in numbers.split(','):
-        strip.setPixelColor(int(number)+shift,Color(255, 0, 0))
+    while count <shotFlashCount:
+        for number in numbers.split(','):
+            strip.setPixelColor(int(number)+shift,Color(255, 0, 0))
+            strip.show()
+        time.sleep(shotWaitTimeCount)
+        for number in numbers.split(','):
+            strip.setPixelColor(int(number)+shift,Color(0, 255, 0))
         strip.show()
-    time.sleep(shotWaitTimeCount)
-    for number in numbers.split(','):
-        strip.setPixelColor(int(number)+shift,Color(0, 255, 0))
-    strip.show()
-    time.sleep(shotWaitTimeCount)
-    for number in numbers.split(','):
-        strip.setPixelColor(int(number)+shift,Color(0, 0, 255))
-    strip.show()
-    time.sleep(shotWaitTimeCount)
-    for number in numbers.split(','):
-        strip.setPixelColor(int(number)+shift,Color(0, 255, 0))
-    strip.show()
-    time.sleep(shotWaitTimeCount)
-    for number in numbers.split(','):
-        strip.setPixelColor(int(number)+shift,Color(255,0, 0))
-    strip.show()
-    time.sleep(shotWaitTimeCount)
+        time.sleep(shotWaitTimeCount)
+        for number in numbers.split(','):
+            strip.setPixelColor(int(number)+shift,Color(0, 0, 255))
+        strip.show()
+        time.sleep(shotWaitTimeCount)
+        for number in numbers.split(','):
+            strip.setPixelColor(int(number)+shift,Color(0, 255, 0))
+        strip.show()
+        time.sleep(shotWaitTimeCount)
+        for number in numbers.split(','):
+            strip.setPixelColor(int(number)+shift,Color(255,0, 0))
+        strip.show()
+        time.sleep(shotWaitTimeCount)
+        count+=1
     colorClear()
     strip.show()
 
