@@ -31,6 +31,8 @@ green=Color(0, 0, 255)
 shift=int(-1)
 timeBeteenLetters=1
 waiting=1
+shotFlashCount=5
+shotWaitTimeCount=.50
 
 class Consumer(AbstractConsumer):
     def run(self, msg):
@@ -78,35 +80,60 @@ def displayMessage(message):
     if waitingThread and waitingThread.isAlive():
         waiting=1
         waitingThread.join()
+    if message=='shots':
+        displayShots()
+    else:
+        logging.info('Printing new message: %s', message)
+        colorWipe(strip,red,10)
+        words=message.split(' ')
+        for word in words:
+            if word.lower() in alphabetDict:
 
-    currentCharacter=None
-    previousCharacter=None
-    logging.info('Printing new message: %s', message)
-    colorWipe(strip,red,10)
-    words=message.split(' ')
-    for word in words:
-        if word.lower() in alphabetDict:
-            numbers=alphabetDict.get(word.lower())
-            logging.debug('Found matching numbers %s', numbers)
-            colorClear()
-            for number in numbers.split(','):
-                strip.setPixelColor(int(number)+shift,Color(255, 0, 0))
-            strip.show()
-            time.sleep(timeBeteenLetters)
 
-        else:
-            for c in word:
-                logging.debug('Checking character: %s', c)
-                if c.lower() in alphabetDict:
-                    numbers=alphabetDict.get(c.lower())
-                    logging.debug('Found matching numbers %s', numbers)
-                    colorClear()
-                    for number in numbers.split(','):
-                        strip.setPixelColor(int(number)+shift,Color(255, 0, 0))
-                strip.show()
-                time.sleep(timeBeteenLetters)
+            else:
+                for c in word:
+                    logging.debug('Checking character: %s', c)
+                    if c.lower() in alphabetDict:
+                        numbers=alphabetDict.get(c.lower())
+                        logging.debug('Found matching numbers %s', numbers)
+                        colorClear()
+                        for number in numbers.split(','):
+                            strip.setPixelColor(int(number)+shift,Color(255, 0, 0))
+                    strip.show()
+                    time.sleep(timeBeteenLetters)
     colorClear()
     strip.show()
+
+def displayShots():
+    numbers=alphabetDict.get('shots')
+    logging.debug('Found matching numbers %s', numbers)
+
+    colorClear()
+    strip.show()
+    for number in numbers.split(','):
+        strip.setPixelColor(int(number)+shift,Color(255, 0, 0))
+        strip.show()
+    time.sleep(shotWaitTimeCount)
+    for number in numbers.split(','):
+        strip.setPixelColor(int(number)+shift,Color(0, 255, 0))
+    strip.show()
+    time.sleep(shotWaitTimeCount)
+    for number in numbers.split(','):
+        strip.setPixelColor(int(number)+shift,Color(0, 0, 255))
+    strip.show()
+    time.sleep(shotWaitTimeCount)
+    for number in numbers.split(','):
+        strip.setPixelColor(int(number)+shift,Color(0, 255, 0))
+    strip.show()
+    time.sleep(shotWaitTimeCount)
+    for number in numbers.split(','):
+        strip.setPixelColor(int(number)+shift,Color(255,0, 0))
+    strip.show()
+    time.sleep(shotWaitTimeCount)
+    colorClear()
+    strip.show()
+:
+
 
 def waitingDisplay():
     while True:
