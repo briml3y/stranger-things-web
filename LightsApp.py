@@ -88,7 +88,13 @@ def displayMessage(message):
         words=message.split(' ')
         for word in words:
             if word.lower() in alphabetDict:
-
+                numbers=alphabetDict.get(word.lower())
+                logging.debug('Found matching numbers %s', numbers)
+                colorClear()
+                for number in numbers.split(','):
+                    strip.setPixelColor(int(number)+shift,Color(255, 0, 0))
+                strip.show()
+                time.sleep(timeBeteenLetters)
 
             else:
                 for c in word:
